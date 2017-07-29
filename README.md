@@ -1,4 +1,6 @@
-First and foremost, you should notice that only Minor GC pauses cleaning the Young Generation are affected.  The frequency nor duration of the GC pauses cleaning the Old Generation is not directly impacted by allocation rate, but instead by promotion rate. A low allocation rate might mean Eden space is too small and is a bottle neck. Or a low allocation rate might indicate you are not creating many objects. 
+STUFF PULLED TOGTHER FROM OTHER PEOPLE'S WORK I STUMBLED ACROSS AT SOME POINT OR ANOTHER:
+
+Only Minor GC pauses cleaning the Young Generation are affected.  The frequency nor duration of the GC pauses cleaning the Old Generation is not directly impacted by allocation rate, but instead by promotion rate. A low allocation rate might mean Eden space is too small and is a bottle neck. Or a low allocation rate might indicate you are not creating many objects. 
 
 Promotion rate is measured in the amount of data propagated from Young generation to Old generation per time unit. It is often measured in MB/sec, similar to allocation rate. But as opposed to allocation rate that affects the frequency of Minor GC events, promotion rate affects the frequency of Major GC events.
 
