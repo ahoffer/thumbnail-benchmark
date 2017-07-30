@@ -25,6 +25,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -43,14 +44,11 @@ public class ThumbnailBenchmark {
 
     public BufferedImage thumbnail;
 
-    @Param({"4", "8", "16"})
-    public int samplingPeriod;
-
     String lastTechnique;
 
     // Website with large ortho images: https://apollomapping.com/
     @Param({"land-100kb.jpg", "crowd-3mb.jpg", "land-8mb.jpg", "building-30mb.jpg",
-            "mountains-20mb.jpg", "australia-250mb.png"})
+            "mountains-20mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
     String filename;
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
@@ -62,10 +60,10 @@ public class ThumbnailBenchmark {
         Options opt = new OptionsBuilder().include(simpleName)
                 .forks(1)
                 .warmupIterations(1)
-                .measurementIterations(4)
+                .measurementIterations(3)
                 .jvmArgsAppend("-Xms4g")
                 .resultFormat(ResultFormatType.CSV)
-                //   .addProfiler(GCProfiler.class)
+                .addProfiler(GCProfiler.class)
                 .build();
         new Runner(opt).run();
     }
@@ -93,17 +91,32 @@ public class ThumbnailBenchmark {
     @Benchmark
     public BufferedImage scalrSimple() throws IOException {
         BufferedImage bufferedImage = ImageIO.read(new File(inputDir + filename));
-        thumbnail = Scalr.resize(bufferedImage, thumbSize);
+        thumbnail = Scalr.resize(bufferedImage,Scalr.Method.SPEED, thumbSize);
         lastTechnique = "scalrSimple";
         return thumbnail;
     }
 
     @Benchmark
-    public BufferedImage subsampling() throws IOException {
+    public BufferedImage subsampling2() throws IOException {
+        int samplingPeriod = 2;
         BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
-        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED,
-                //                Scalr.Mode.FIT_EXACT,
-                thumbSize);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
+        lastTechnique = "subsampling" + samplingPeriod;
+        return thumbnail;
+    }
+    @Benchmark
+    public BufferedImage subsampling4() throws IOException {
+        int samplingPeriod = 4;
+        BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
+        lastTechnique = "subsampling" + samplingPeriod;
+        return thumbnail;
+    }
+    @Benchmark
+    public BufferedImage subsampling8() throws IOException {
+        int samplingPeriod = 8;
+        BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
         lastTechnique = "subsampling" + samplingPeriod;
         return thumbnail;
     }
