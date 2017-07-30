@@ -1,8 +1,10 @@
 package thumbnail;
 
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -10,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
+import javax.imageio.spi.IIORegistry;
 import javax.imageio.stream.ImageInputStream;
 
 import org.imgscalr.Scalr;
@@ -19,13 +22,16 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+import com.github.jaiimageio.jpeg2000.impl.J2KImageReaderSpi;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -37,40 +43,45 @@ public class ThumbnailBenchmark {
 
     public BufferedImage thumbnail;
 
+    @Param({"4", "8", "16"})
+    public int samplingPeriod;
+
     String lastTechnique;
 
+    // Website with large ortho images: https://apollomapping.com/
     @Param({"land-100kb.jpg", "crowd-3mb.jpg", "land-8mb.jpg", "building-30mb.jpg",
             "mountains-20mb.jpg", "australia-250mb.png"})
     String filename;
 
-    String dir = "/Users/aaronhoffer/Downloads/sample-images/";
+    String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
+
+    String outputDir = inputDir + "output/";
 
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
                 .forks(1)
                 .warmupIterations(1)
-                .measurementIterations(2)
-                .jvmArgsAppend("-Xms4096m")
-                .addProfiler(GCProfiler.class)
+                .measurementIterations(4)
+                .jvmArgsAppend("-Xms4g")
+                .resultFormat(ResultFormatType.CSV)
+                //   .addProfiler(GCProfiler.class)
                 .build();
         new Runner(opt).run();
     }
 
-    BufferedImage getBufferedImageFromDisk() {
-        try {
-            return ImageIO.read(new File(dir + filename));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+    @Setup
+    public void setup() throws FileNotFoundException {
+
+        IIORegistry.getDefaultInstance()
+                .registerServiceProvider(new J2KImageReaderSpi());
     }
 
     @TearDown
     public void teardown() {
 
         try {
-            ImageIO.write(thumbnail, "png", new File(dir + lastTechnique + "." + filename));
+            ImageIO.write(thumbnail, "png", new File(outputDir + lastTechnique + "." + filename));
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -79,27 +90,52 @@ public class ThumbnailBenchmark {
         }
     }
 
-//    @Benchmark
-    public BufferedImage scalarSimple() {
-
-        thumbnail = Scalr.resize(getBufferedImageFromDisk(), thumbSize);
-        lastTechnique = "scalarSimple()";
+    @Benchmark
+    public BufferedImage scalrSimple() throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(new File(inputDir + filename));
+        thumbnail = Scalr.resize(bufferedImage, thumbSize);
+        lastTechnique = "scalrSimple";
         return thumbnail;
     }
 
     @Benchmark
     public BufferedImage subsampling() throws IOException {
-        ImageReadParam imageParam = new ImageReadParam();
-        int columnsSamplingPeriod = 4;
-        int rowSamplingPeriod = 4;
+        BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED,
+                //                Scalr.Mode.FIT_EXACT,
+                thumbSize);
+        lastTechnique = "subsampling" + samplingPeriod;
+        return thumbnail;
+    }
+
+    @Benchmark
+    public BufferedImage scalrTikaTransformer() throws IOException {
+        // why doesn't this work?
+        //        Image image = ImageIO.read(inputStream);
+        Image image = ImageIO.read(new File(inputDir + filename));
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null),
+                image.getHeight(null),
+                BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = bufferedImage.createGraphics();
+        graphics.drawImage(image, null, null);
+        graphics.dispose();
+        thumbnail = Scalr.resize(bufferedImage, thumbSize);
+        lastTechnique = "scalrTikaTransformer";
+        return thumbnail;
+    }
+
+    BufferedImage getSubsampledImage(String fullFilename, int period) throws IOException {
+        int columnsSamplingPeriod = period;
+        int rowSamplingPeriod = period;
         int columnOffset = 0;
         int rowOffset = 0;
+        ImageReadParam imageParam = new ImageReadParam();
         imageParam.setSourceSubsampling(columnsSamplingPeriod,
                 rowSamplingPeriod,
                 columnOffset,
                 rowOffset);
 
-        final File source = new File(dir + filename);
+        final File source = new File(fullFilename);
         //Create seekable input stream for use by image readers
         final ImageInputStream imageInputStream = ImageIO.createImageInputStream(source);
         // Find all image readers that recognize the image format
@@ -107,63 +143,7 @@ public class ThumbnailBenchmark {
         // Use the first reader. Throw exception if no reader exists.
         final ImageReader reader = (ImageReader) iter.next();
         reader.setInput(imageInputStream);
-        BufferedImage bufferedImage = reader.read(0, imageParam);
-        thumbnail = Scalr.resize(bufferedImage, thumbSize);
-        lastTechnique = "subsampling()";
-        return thumbnail;
+        return reader.read(0, imageParam);
     }
-
-//    @Benchmark
-    public BufferedImage scalarTikaTransformer() {
-        final BufferedImage bufferedImage = getBufferedImageFromDisk();
-        BufferedImage copy = new BufferedImage(bufferedImage.getWidth(null),
-                bufferedImage.getHeight(null),
-                BufferedImage.TYPE_INT_RGB);
-        Graphics2D graphics = bufferedImage.createGraphics();
-        graphics.drawImage(copy, null, null);
-        graphics.dispose();
-        thumbnail = Scalr.resize(copy, thumbSize);
-        lastTechnique = "scalarTikaTransformer()";
-        return thumbnail;
-    }
-
-
-
-
-  /*
-
-  ImageInputStream iis = ImageIO.createImageInputStream(o);
-
-    // Find all image readers that recognize the image format
-    Iterator iter = ImageIO.getImageReaders(iis);
-    if (!iter.hasNext()) {
-        // No readers found
-        return null;
-    }
-
-    // Use the first reader
-    ImageReader reader = (ImageReader)iter.next();
-    From : http://www.exampledepot.com/egs/javax.imageio/DiscType.html
-
-    One you have the ImageReader you can get the aspect ration by calling reader.getAspectRatio()
-
-    I'm not sure how you'd go from an ImageReader to a thumbnail though.
-
-            shareeditflag
-    answered May 3 '11 at 19:56
-
-    Karthik Ramachandran
-7,56183345
-
-
-    Excellent. Works very well using ImageReadParam.getSourceSubSampling(wratio, hratio, 0, 0) to scale it before getting the BufferedImage with ImageReader.read(0, ImageReadParam). – Johannes Keinestam May 4 '11 at 17:37
-
-
-    @SWEn0thing. Cool I'll have to remember that for how to get a thumbnail. – Karthik Ramachandran May 4 '11 at 17:57
-            3
-
-    I needed to add call the following too. ImageReadParam params = reader.getDefaultReadParam(); reader.setInput(iis, true, true); params.setSourceSubsampling(width, height, 0, 0); – Neil Wightman May 31 '12 at 8:07
-    */
-
 }
 
