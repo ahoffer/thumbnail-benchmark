@@ -91,7 +91,7 @@ public class ThumbnailBenchmark {
     @Benchmark
     public BufferedImage scalrSimple() throws IOException {
         BufferedImage bufferedImage = ImageIO.read(new File(inputDir + filename));
-        thumbnail = Scalr.resize(bufferedImage,Scalr.Method.SPEED, thumbSize);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
         lastTechnique = "scalrSimple";
         return thumbnail;
     }
@@ -104,6 +104,7 @@ public class ThumbnailBenchmark {
         lastTechnique = "subsampling" + samplingPeriod;
         return thumbnail;
     }
+
     @Benchmark
     public BufferedImage subsampling4() throws IOException {
         int samplingPeriod = 4;
@@ -112,6 +113,7 @@ public class ThumbnailBenchmark {
         lastTechnique = "subsampling" + samplingPeriod;
         return thumbnail;
     }
+
     @Benchmark
     public BufferedImage subsampling8() throws IOException {
         int samplingPeriod = 8;
@@ -123,8 +125,6 @@ public class ThumbnailBenchmark {
 
     @Benchmark
     public BufferedImage scalrTikaTransformer() throws IOException {
-        // why doesn't this work?
-        //        Image image = ImageIO.read(inputStream);
         Image image = ImageIO.read(new File(inputDir + filename));
         BufferedImage bufferedImage = new BufferedImage(image.getWidth(null),
                 image.getHeight(null),
@@ -142,11 +142,6 @@ public class ThumbnailBenchmark {
         int rowSamplingPeriod = period;
         int columnOffset = 0;
         int rowOffset = 0;
-        ImageReadParam imageParam = new ImageReadParam();
-        imageParam.setSourceSubsampling(columnsSamplingPeriod,
-                rowSamplingPeriod,
-                columnOffset,
-                rowOffset);
 
         final File source = new File(fullFilename);
         //Create seekable input stream for use by image readers
@@ -155,6 +150,11 @@ public class ThumbnailBenchmark {
         final Iterator iter = ImageIO.getImageReaders(imageInputStream);
         // Use the first reader. Throw exception if no reader exists.
         final ImageReader reader = (ImageReader) iter.next();
+        ImageReadParam imageParam = reader.getDefaultReadParam();
+        imageParam.setSourceSubsampling(columnsSamplingPeriod,
+                rowSamplingPeriod,
+                columnOffset,
+                rowOffset);
         reader.setInput(imageInputStream);
         return reader.read(0, imageParam);
     }
