@@ -1,5 +1,7 @@
 package thumbnail;
 
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,6 +34,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import com.github.jaiimageio.jpeg2000.impl.J2KImageReaderSpi;
 
+import net.coobird.thumbnailator.Thumbnails;
+
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
@@ -45,12 +49,11 @@ public class ThumbnailBenchmark {
     String lastTechnique;
 
     // Website with large ortho images: https://apollomapping.com/
-    @Param({"land-100kb.jpg", "crowd-3mb.jpg",
-            /*
-                "land-8mb.jpg", "building-30mb.jpg",
-                "mountains-20mb.jpg", "australia-250mb.png"  , "salt-lake-340mb.jpg"
-            */})
-    String filename;
+    @Param({"land-100kb.jpg", "crowd-3mb.jpg"})
+
+    //@Param({"land-100kb.jpg", "crowd-3mb.jpg", "land-8mb.jpg", "building-30mb.jpg",
+            //"mountains-20mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
+            String filename;
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
 
@@ -63,7 +66,7 @@ public class ThumbnailBenchmark {
                 .warmupIterations(1)
                 .measurementIterations(3)
                 .jvmArgsAppend("-Xms4g")
-                .resultFormat(ResultFormatType.NORM)
+                .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(GCProfiler.class)
                 .build();
         new Runner(opt).run();
@@ -97,60 +100,57 @@ public class ThumbnailBenchmark {
         return thumbnail;
     }
 
-    /*
+    @Benchmark
+    public BufferedImage subsampling2() throws IOException {
+        int samplingPeriod = 2;
+        BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
+        lastTechnique = "subsampling" + samplingPeriod;
+        return thumbnail;
+    }
+/*
+    @Benchmark
+    public BufferedImage subsampling4() throws IOException {
+        int samplingPeriod = 4;
+        BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
+        lastTechnique = "subsampling" + samplingPeriod;
+        return thumbnail;
+    }
 
-        @Benchmark
-        public BufferedImage subsampling2() throws IOException {
-            int samplingPeriod = 2;
-            BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
-            thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
-            lastTechnique = "subsampling" + samplingPeriod;
-            return thumbnail;
-        }
+    @Benchmark
+    public BufferedImage subsampling8() throws IOException {
+        int samplingPeriod = 8;
+        BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
+        thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
+        lastTechnique = "subsampling" + samplingPeriod;
+        return thumbnail;
+    }
 
-        @Benchmark
-        public BufferedImage subsampling4() throws IOException {
-            int samplingPeriod = 4;
-            BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
-            thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
-            lastTechnique = "subsampling" + samplingPeriod;
-            return thumbnail;
-        }
+    @Benchmark
+    public BufferedImage scalrTikaTransformer() throws IOException {
+        Image image = ImageIO.read(new File(inputDir + filename));
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null),
+                image.getHeight(null),
+                BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = bufferedImage.createGraphics();
+        graphics.drawImage(image, null, null);
+        graphics.dispose();
+        thumbnail = Scalr.resize(bufferedImage, thumbSize);
+        lastTechnique = "scalrTikaTransformer";
+        return thumbnail;
+    }
 
-        @Benchmark
-        public BufferedImage subsampling8() throws IOException {
-            int samplingPeriod = 8;
-            BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
-            thumbnail = Scalr.resize(bufferedImage, Scalr.Method.SPEED, thumbSize);
-            lastTechnique = "subsampling" + samplingPeriod;
-            return thumbnail;
-        }
+    @Benchmark
+    public BufferedImage thumbnailator() throws IOException {
+        thumbnail = Thumbnails.of(inputDir + filename)
+                .height(thumbSize)
+                .asBufferedImage();
+        lastTechnique = "thumbnailator";
+        return thumbnail;
+    }
 
-        @Benchmark
-        public BufferedImage scalrTikaTransformer() throws IOException {
-            Image image = ImageIO.read(new File(inputDir + filename));
-            BufferedImage bufferedImage = new BufferedImage(image.getWidth(null),
-                    image.getHeight(null),
-                    BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = bufferedImage.createGraphics();
-            graphics.drawImage(image, null, null);
-            graphics.dispose();
-            thumbnail = Scalr.resize(bufferedImage, thumbSize);
-            lastTechnique = "scalrTikaTransformer";
-            return thumbnail;
-        }
-
-
-        @Benchmark
-        public BufferedImage thumbnailator() throws IOException {
-            thumbnail = Thumbnails.of(inputDir + filename)
-                    .height(thumbSize)
-                    .asBufferedImage();
-            lastTechnique = "thumbnailator";
-            return thumbnail;
-        }
-
-    */
+*/
     BufferedImage getSubsampledImage(String fullFilename, int period) throws IOException {
         int columnsSamplingPeriod = period;
         int rowSamplingPeriod = period;

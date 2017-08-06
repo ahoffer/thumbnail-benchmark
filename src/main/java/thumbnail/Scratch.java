@@ -27,7 +27,7 @@ public class Scratch {
         Options opt = new OptionsBuilder().include(simpleName)
                 .forks(1)
                 .warmupIterations(0)
-                .measurementIterations(1).resultFormat(ResultFormatType.NORM)
+                .measurementIterations(1).resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .build();
         new Runner(opt).run();
     }

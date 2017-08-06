@@ -1,0 +1,55 @@
+Runner =
+        .forks(0)
+        .warmupIterations(1)
+        .measurementIterations(3)
+        .jvmArgsAppend("-Xms4g")
+        .resultFormat(ResultFormatType.NORM)
+        .addProfiler(GCProfiler.class)
+
+At the end of a run, JMH passes a set of RunResults to the formatter.
+Each Result run has:
+  1. A collection of BenchmarkResults
+  2. A BenchmarkParams
+
+(RunResult has many subclasses)
+RunResult.getParams -> BenchmarkParams
+RunResult.getAggredatedResult -> BenchmarkResult
+RunResult.getBenchmarkResults -> Collection<BenchmarkResult>
+RunResult.getPrimaryResult -> Result
+RunResult.getSecondaryResults -> Map<String, Result>
+
+Result.getLabel -> String
+Result.getScoreUnit -> String
+Result.getScoreError -> double
+Result.getScore -> double
+Result.getSampleCount -> long
+
+BenchmarkResult.getBenchmarkResults -> Multimap<String, Result>
+BenchmarkResult.getIterationResults -> Collection<IterationResult>
+BenchmarkResult.getParams -> BenchmarkParams
+BenchmarkResult.getPrimaryResult -> Result
+BenchmarkResult.getSecondaryResults -> Map<String, Result>
+
+IterationResult.getBenchmarkParams -> BenchmarkParams
+IterationResult.getParams -> IterationParams
+IterationResult.getPrimaryResult -> Result
+IterationResult.getRawPrimaryResults -> Collection<Result>
+IterationResult.getScoreUnit -> String
+===============================================================================
+
+IterationParams.getCount -> int (number of iterations)
+IterationParams.getTime -> TimeValue
+IterationParams.getType -> IterationType
+
+BenchmarkParams.getBenchmark -> String (name)
+BenchmarkParams.getMeasurement -> IterationParams (for measurement phase)
+BenchmarkParams.getMode -> Mode
+BenchmarkParams.getTimeUnit -> TimeUnit
+BenchmarkParams.getParamsKeys -> Collection<String>
+BenchmarkParams.generatedBenchmark -> String (name)
+BenchmarkParams.getParam(String) -> String (parameter value)
+===============================================================================
+
+TimeValue.getTime -> long
+TimeValue.getTimeUnit -> java.util.concurrent.TimeUnit
+Statistics .mean(), max(), min(), n(), sum(), variance()
