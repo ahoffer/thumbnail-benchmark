@@ -11,6 +11,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -26,7 +27,7 @@ public class Scratch {
         Options opt = new OptionsBuilder().include(simpleName)
                 .forks(1)
                 .warmupIterations(0)
-                .measurementIterations(1)
+                .measurementIterations(1).resultFormat(ResultFormatType.NORM)
                 .build();
         new Runner(opt).run();
     }
