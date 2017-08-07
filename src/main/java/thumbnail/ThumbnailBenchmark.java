@@ -49,10 +49,10 @@ public class ThumbnailBenchmark {
     String lastTechnique;
 
     // Website with large ortho images: https://apollomapping.com/
-    @Param({"land-100kb.jpg", "crowd-3mb.jpg"})
+//    @Param({"land-100kb.jpg", "crowd-3mb.jpg"})
 
-    //@Param({"land-100kb.jpg", "crowd-3mb.jpg", "land-8mb.jpg", "building-30mb.jpg",
-            //"mountains-20mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
+    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "land-8mb.jpg", "building-30mb.jpg",
+            "mountains-20mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
             String filename;
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
@@ -62,10 +62,10 @@ public class ThumbnailBenchmark {
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
-                .forks(0)
+                .forks(1)
                 .warmupIterations(1)
-                .measurementIterations(3)
-                .jvmArgsAppend("-Xms4g")
+                .measurementIterations(4)
+                .jvmArgsAppend("-Xms6g")
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(GCProfiler.class)
                 .build();
@@ -108,7 +108,7 @@ public class ThumbnailBenchmark {
         lastTechnique = "subsampling" + samplingPeriod;
         return thumbnail;
     }
-/*
+
     @Benchmark
     public BufferedImage subsampling4() throws IOException {
         int samplingPeriod = 4;
@@ -150,7 +150,6 @@ public class ThumbnailBenchmark {
         return thumbnail;
     }
 
-*/
     BufferedImage getSubsampledImage(String fullFilename, int period) throws IOException {
         int columnsSamplingPeriod = period;
         int rowSamplingPeriod = period;
