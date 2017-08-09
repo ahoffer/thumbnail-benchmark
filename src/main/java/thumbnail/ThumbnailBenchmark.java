@@ -49,7 +49,7 @@ public class ThumbnailBenchmark {
     String lastTechnique;
 
     // Website with large ortho images: https://apollomapping.com/
-    @Param({"land-100kb.jpg",/* "crowd-3mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2"*/})
+    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2"})
     String filename;
 
     //    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "carrots-j2k-8mb.j2k", "land-8mb.jpg",
@@ -66,7 +66,7 @@ public class ThumbnailBenchmark {
         Options opt = new OptionsBuilder().include(simpleName)
                 .forks(0)
                 .warmupIterations(1)
-                .measurementIterations(2)
+                .measurementIterations(3)
                 .jvmArgsAppend("-Xms2g")
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(GCProfiler.class)
