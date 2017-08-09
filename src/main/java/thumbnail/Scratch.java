@@ -25,9 +25,10 @@ public class Scratch {
     public static void main(String[] args) throws RunnerException {
         String simpleName = Scratch.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
-                .forks(1)
+                .forks(0)
                 .warmupIterations(0)
-                .measurementIterations(1).resultFormat(ResultFormatType.NORMALIZED_CSV)
+                .measurementIterations(1)
+                .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .build();
         new Runner(opt).run();
     }
@@ -42,7 +43,7 @@ public class Scratch {
     @Benchmark
     public BufferedImage test() throws IOException {
         BufferedImage bufferedImage = new ThumbnailBenchmark().getSubsampledImage(
-                "/Users/aaronhoffer/Downloads/sample-images/salt-lake-340mb.jp2",
+                "/Users/aaronhoffer/Downloads/sample-images/carrots-j2k-8mb.j2k",
                 128);
         return Scalr.resize(bufferedImage, 200);
 

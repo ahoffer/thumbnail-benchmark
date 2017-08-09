@@ -49,11 +49,13 @@ public class ThumbnailBenchmark {
     String lastTechnique;
 
     // Website with large ortho images: https://apollomapping.com/
-//    @Param({"land-100kb.jpg", "crowd-3mb.jpg"})
+    @Param({"land-100kb.jpg",/* "crowd-3mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2"*/})
+    String filename;
 
-    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "land-8mb.jpg", "building-30mb.jpg",
-            "mountains-20mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
-            String filename;
+    //    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "carrots-j2k-8mb.j2k", "land-8mb.jpg",
+    //            "building-30mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2", "olso-j2k-19mb.jp2",
+    //            "australia-250mb.png", "salt-lake-340mb.jpg"})
+    //    String filename;
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
 
@@ -62,10 +64,10 @@ public class ThumbnailBenchmark {
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
-                .forks(1)
+                .forks(0)
                 .warmupIterations(1)
-                .measurementIterations(4)
-                .jvmArgsAppend("-Xms6g")
+                .measurementIterations(2)
+                .jvmArgsAppend("-Xms2g")
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(GCProfiler.class)
                 .build();
@@ -74,7 +76,7 @@ public class ThumbnailBenchmark {
 
     @Setup
     public void setup() throws FileNotFoundException {
-
+        // Add a JPEG 2000 reader
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new J2KImageReaderSpi());
     }
@@ -109,7 +111,7 @@ public class ThumbnailBenchmark {
         return thumbnail;
     }
 
-    @Benchmark
+    //    @Benchmark
     public BufferedImage subsampling4() throws IOException {
         int samplingPeriod = 4;
         BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
@@ -118,7 +120,7 @@ public class ThumbnailBenchmark {
         return thumbnail;
     }
 
-    @Benchmark
+    //    @Benchmark
     public BufferedImage subsampling8() throws IOException {
         int samplingPeriod = 8;
         BufferedImage bufferedImage = getSubsampledImage(inputDir + filename, samplingPeriod);
