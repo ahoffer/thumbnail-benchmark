@@ -1,16 +1,13 @@
 package thumbnail;
 
-import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 
 import javax.imageio.spi.IIORegistry;
 
-import org.imgscalr.Scalr;
-import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.results.format.ResultFormatType;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -29,6 +26,7 @@ public class Scratch {
                 .warmupIterations(0)
                 .measurementIterations(1)
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
+                .addProfiler(GCProfiler.class)
                 .build();
         new Runner(opt).run();
     }
@@ -40,12 +38,4 @@ public class Scratch {
                 .registerServiceProvider(new J2KImageReaderSpi());
     }
 
-    @Benchmark
-    public BufferedImage test() throws IOException {
-        BufferedImage bufferedImage = new ThumbnailBenchmark().getSubsampledImage(
-                "/Users/aaronhoffer/Downloads/sample-images/carrots-j2k-8mb.j2k",
-                128);
-        return Scalr.resize(bufferedImage, 200);
-
-    }
 }
