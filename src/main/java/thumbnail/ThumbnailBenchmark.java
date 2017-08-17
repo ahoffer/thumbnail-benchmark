@@ -42,18 +42,18 @@ public class ThumbnailBenchmark {
     public int thumbSize;
 
     // Website with large ortho images: https://apollomapping.com/
-    @Param({"parliment-60kb.jpg", "land-100kb.jpg", "city-300kb.jpg", "crowd-3mb.jpg",
-         /*   "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2"*/})
-    String filename;
+    //    @Param({"parliment-60kb.jpg", "land-100kb.jpg", "city-300kb.jpg", "crowd-3mb.jpg",
+    //          "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2"})
+    //    String filename;
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
 
-    private TestRun testRun;
+    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "carrots-j2k-8mb.j2k", "land-8mb.jpg",
+            "building-30mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2", "olso-j2k-19mb.jp2",
+            "australia-250mb.png", "salt-lake-340mb.jpg"})
+    String filename;
 
-    //    @Param({"land-100kb.jpg", "crowd-3mb.jpg", "carrots-j2k-8mb.j2k", "land-8mb.jpg",
-    //            "building-30mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2", "olso-j2k-19mb.jp2",
-    //            "australia-250mb.png", "salt-lake-340mb.jpg"})
-    //    String filename;
+    private TestRun testRun;
 
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
@@ -103,21 +103,21 @@ public class ThumbnailBenchmark {
                 thumbSize));
     }
 
-    //    @Benchmark
+    @Benchmark
     public BufferedImage subsampling4Thumbnailator() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsampling04Thumbnailator");
         return testRun.setThumbnailAndReturn(Scalr.resize(testRun.getSubsampledImage(4),
                 thumbSize));
     }
 
-    //    @Benchmark
+    @Benchmark
     public BufferedImage subsampling16Thumnbailator() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsampling16Thumbnailator");
         return testRun.setThumbnailAndReturn(Scalr.resize(testRun.getSubsampledImage(16),
                 thumbSize));
     }
 
-    //    @Benchmark
+    @Benchmark
     public BufferedImage scalrTikaTransformer() throws IOException {
         testRun.setSourceFileAndLabel(filename, "scalrTikaTransformer");
         Image image = ImageIO.read(new File(inputDir + filename));
@@ -130,7 +130,7 @@ public class ThumbnailBenchmark {
         return testRun.setThumbnailAndReturn(Scalr.resize(sourceImage, thumbSize));
     }
 
-    //    @Benchmark
+    @Benchmark
     public BufferedImage thumbnailator() throws IOException {
         testRun.setSourceFileAndLabel(filename, "thumbnailator");
         return testRun.setThumbnailAndReturn(Thumbnails.of(inputDir + filename)
