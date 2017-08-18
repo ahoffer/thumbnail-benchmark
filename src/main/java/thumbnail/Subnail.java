@@ -6,27 +6,29 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.Objects;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
-import net.coobird.thumbnailator.Thumbnails;
-
 public class Subnail {
+
+    public static final double SUBSAMPLING_HINT = Math.pow(2, 10);
 
     @FunctionalInterface
     public interface DimSupplier {
         int get() throws IOException;
     }
 
+    @FunctionalInterface
+    public interface IoFunction {
+        BufferedImage apply(BufferedImage sourceImage) throws IOException;
+    }
+
     long fileSizeHint;
 
     int imageIndex;
-
-    int size = 256;
 
     //TODO: Convert sample period to Optional<Integer>
     int columnsSamplingPeriod = 0;
@@ -63,11 +65,6 @@ public class Subnail {
         return this;
     }
 
-    public Subnail thumbSize(int thumbSize) {
-        this.size = thumbSize;
-        return this;
-    }
-
     public Subnail imageIndex(int index) {
         imageIndex = index;
         return this;
@@ -95,10 +92,20 @@ public class Subnail {
         return this;
     }
 
-    public BufferedImage create() throws IOException {
-        return Thumbnails.of(getImage())
-                .height(size)
-                .asBufferedImage();
+    public BufferedImage create(IoFunction resizeFunction) throws IOException {
+        BufferedImage output;
+
+        try {
+
+            output = resizeFunction.apply(getImage());
+
+        } finally {
+            //TODO: validate they are not null;
+            source.close();
+            reader.dispose();
+        }
+
+        return output;
     }
 
     public int getRowSamplePeriod() {
@@ -134,7 +141,7 @@ public class Subnail {
                 return samplePeriod;
             }
         }
-        samplePeriod = Math.toIntExact(Math.round(Math.ceil(dimension / Math.pow(2, 11))));
+        samplePeriod = Math.toIntExact(Math.round(Math.ceil(dimension / SUBSAMPLING_HINT)));
         return samplePeriod;
     }
 
@@ -146,6 +153,6 @@ public class Subnail {
                 getRowSamplePeriod(),
                 columnOffset,
                 rowOffset);
-        return reader.read(imageIndex);
+        return reader.read(imageIndex, imageParam);
     }
 }

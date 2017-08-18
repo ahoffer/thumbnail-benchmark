@@ -1,12 +1,9 @@
 package thumbnail;
 
-import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 
 import javax.imageio.spi.IIORegistry;
 
-import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -52,15 +49,15 @@ public class Scratch {
         new Runner(opt).run();
     }
 
-    @Benchmark
+  /*  @Benchmark
     public BufferedImage jpeg2000() throws IOException {
         testRun.setSourceFileAndLabel(filename, "jpeg2000");
         BufferedImage output = Subnail.of(testRun.getSoureceFile())
                 .thumbSize(thumbSize)
                 .samplePeriod(16)
-                .create();
+                .create((sourceImage, thumbnailSize) -> Scalr.resize(sourceImage, thumbnailSize));
         return testRun.setThumbnailAndReturn(output);
-    }
+    }*/
 
     @Setup
     public void setup() throws FileNotFoundException {

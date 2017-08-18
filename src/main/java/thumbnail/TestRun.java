@@ -2,7 +2,6 @@ package thumbnail;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -50,17 +49,6 @@ public class TestRun {
         return bufferedImage;
     }
 
-    public BufferedImage getSubsampledImage(int samplePeriod, int thumbsize) throws IOException {
-        return Subnail.of(getSoureceFile())
-                .thumbSize(thumbsize)
-                .samplePeriod(samplePeriod)
-                .getImage();
-
-    }
-
-    public FileInputStream getInputStream() throws FileNotFoundException {
-        return new FileInputStream(inputDir + sourceFilename);
-    }
     public File getSoureceFile() throws FileNotFoundException {
         return new File(inputDir + sourceFilename);
     }
