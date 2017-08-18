@@ -42,7 +42,7 @@ public class ThumbnailBenchmark {
     @Param({"256"})
     public int thumbSize;
 
-    @Param({"building-30mb.jpg"})
+    @Param({"building-30mb.jpg", "crowd-3mb.jpg", "land-100kb.jpg", "australia-250mb.png"})
     String filename;
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
@@ -57,10 +57,10 @@ public class ThumbnailBenchmark {
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
-                .forks(0)
-                .warmupIterations(0)
-                .measurementIterations(1)
-                .jvmArgsAppend("-Xms2g")
+                .forks(1)
+                .warmupIterations(1)
+                .measurementIterations(4)
+                //                .jvmArgsAppend("-Xms2g")
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(NaiveHeapSizeProfiler.class)
                 .addProfiler(GCProfiler.class)
@@ -70,7 +70,7 @@ public class ThumbnailBenchmark {
 
     @Setup
     public void setup() throws FileNotFoundException {
-        // Add a JPEG 2000 reader
+        //         Add a JPEG 2000 reader
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new J2KImageReaderSpi());
         testRun = TestRun.from(inputDir, inputDir + "output/");
@@ -88,8 +88,16 @@ public class ThumbnailBenchmark {
                 thumbSize));
     }
 
-//    @Benchmark
-    public BufferedImage subsamplelingAutoThumbnailator() throws IOException {
+    @Benchmark
+    public BufferedImage thumbnailatorSimple() throws IOException {
+        testRun.setSourceFileAndLabel(filename, "thumbnailator");
+        return testRun.setThumbnailAndReturn(Thumbnails.of(inputDir + filename)
+                .height(thumbSize)
+                .asBufferedImage());
+    }
+
+    @Benchmark
+    public BufferedImage subsamplingAutoThumbnailator() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsamplingAUTOthumbnailator");
         return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
                 .create((soureImage) -> Thumbnails.of(soureImage)
@@ -97,14 +105,14 @@ public class ThumbnailBenchmark {
                         .asBufferedImage()));
     }
 
-//    @Benchmark
-    public BufferedImage subsamplelingAutoScalr() throws IOException {
+    //    @Benchmark
+    public BufferedImage subsamplingAutoScalr() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsamplingAUTOscalr");
         return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
                 .create((soureImage) -> Scalr.resize(soureImage, thumbSize)));
     }
 
-//    @Benchmark
+    //    @Benchmark
     public BufferedImage subsampling16Scalr() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsampling16Scalr");
         return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
@@ -122,24 +130,16 @@ public class ThumbnailBenchmark {
                         .asBufferedImage()));
     }
 
-    //    @Benchmark
+    @Benchmark
     public BufferedImage scalrTikaTransformer() throws IOException {
         testRun.setSourceFileAndLabel(filename, "scalrTikaTransformer");
-        Image image = ImageIO.read(new File(inputDir + filename));
-        BufferedImage sourceImage = new BufferedImage(image.getWidth(null),
-                image.getHeight(null),
+        Image source = ImageIO.read(new File(inputDir + filename));
+        BufferedImage output = new BufferedImage(source.getWidth(null),
+                source.getHeight(null),
                 BufferedImage.TYPE_INT_RGB);
-        Graphics2D graphics = sourceImage.createGraphics();
-        graphics.drawImage(image, null, null);
+        Graphics2D graphics = output.createGraphics();
+        graphics.drawImage(source, null, null);
         graphics.dispose();
-        return testRun.setThumbnailAndReturn(Scalr.resize(sourceImage, thumbSize));
-    }
-
-//    @Benchmark
-    public BufferedImage thumbnailator() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "thumbnailator");
-        return testRun.setThumbnailAndReturn(Thumbnails.of(inputDir + filename)
-                .height(thumbSize)
-                .asBufferedImage());
+        return testRun.setThumbnailAndReturn(Scalr.resize(output, thumbSize));
     }
 }
