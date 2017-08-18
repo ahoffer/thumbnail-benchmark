@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import javax.imageio.spi.IIORegistry;
 
-import org.imgscalr.Scalr;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -56,7 +55,10 @@ public class Scratch {
     @Benchmark
     public BufferedImage jpeg2000() throws IOException {
         testRun.setSourceFileAndLabel(filename, "jpeg2000");
-        BufferedImage output = Scalr.resize(testRun.getSubsampledImage(16), thumbSize);
+        BufferedImage output = Subnail.of(testRun.getSoureceFile())
+                .thumbSize(thumbSize)
+                .samplePeriod(16)
+                .create();
         return testRun.setThumbnailAndReturn(output);
     }
 
