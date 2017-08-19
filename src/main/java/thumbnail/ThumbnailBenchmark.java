@@ -52,7 +52,7 @@ public class ThumbnailBenchmark {
     //            "australia-250mb.png", "salt-lake-340mb.jpg"})
     //    String filename;
 
-    private TestRun testRun;
+    OutputWriter outputWriter;
 
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
@@ -73,66 +73,72 @@ public class ThumbnailBenchmark {
         //         Add a JPEG 2000 reader
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new J2KImageReaderSpi());
-        testRun = TestRun.from(inputDir, inputDir + "output/");
+        outputWriter = OutputWriter.from(inputDir, inputDir + "output/");
     }
 
     @TearDown
     public void teardown() {
-        testRun.end();
+        outputWriter.end();
     }
 
     //    @Benchmark
     public BufferedImage scalrSimple() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "scalr");
-        return testRun.setThumbnailAndReturn(Scalr.resize(ImageIO.read(testRun.getSoureceFile()),
+        outputWriter.setSourceFileAndLabel(filename, "scalr");
+        return outputWriter.setThumbnailAndReturn(Scalr.resize(ImageIO.read(outputWriter.getSoureceFile()),
                 thumbSize));
     }
 
     @Benchmark
     public BufferedImage thumbnailatorSimple() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "thumbnailator");
-        return testRun.setThumbnailAndReturn(Thumbnails.of(inputDir + filename)
-                .height(thumbSize)
-                .asBufferedImage());
+        return outputWriter.next()
+                .setSourceFileAndLabel(filename, "thumbnailator")
+                .setThumbnailAndReturn(Thumbnails.of(inputDir + filename)
+                        .height(thumbSize)
+                        .asBufferedImage());
     }
 
     @Benchmark
     public BufferedImage subsamplingAutoThumbnailator() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "subsamplingAUTOthumbnailator");
-        return testRun.setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(testRun.getSoureceFile())
-                .read())
-                .height(thumbSize)
-                .asBufferedImage());
+        return outputWriter.next()
+                .setSourceFileAndLabel(filename, "subsamplingAUTOthumbnailator")
+                .setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(outputWriter.getSoureceFile())
+                        .read())
+                        .height(thumbSize)
+                        .asBufferedImage());
     }
 
     //    @Benchmark
     public BufferedImage subsamplingAutoScalr() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "subsamplingAUTOscalr");
-        return testRun.setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(testRun.getSoureceFile())
-                .read(), thumbSize));
+        return outputWriter.next()
+                .setSourceFileAndLabel(filename, "subsamplingAUTOscalr")
+                .setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(outputWriter.getSoureceFile())
+                        .read(), thumbSize));
     }
 
     //    @Benchmark
     public BufferedImage subsampling16Scalr() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "subsampling16Scalr");
-        return testRun.setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(testRun.getSoureceFile())
-                .samplePeriod(16)
-                .read(), thumbSize));
+        return outputWriter.next()
+                .setSourceFileAndLabel(filename, "subsampling16Scalr")
+                .setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(outputWriter.getSoureceFile())
+                        .samplePeriod(16)
+                        .read(), thumbSize));
     }
 
     @Benchmark
     public BufferedImage subsampling16Thumnbailator() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "subsampling16Thumbnailator");
-        return testRun.setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(testRun.getSoureceFile())
-                .samplePeriod(16)
-                .read())
-                .height(thumbSize)
-                .asBufferedImage());
+        return outputWriter.next()
+                .setSourceFileAndLabel(filename, "subsampling16Thumbnailator")
+                .setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(outputWriter.getSoureceFile())
+                        .samplePeriod(16)
+                        .read())
+                        .height(thumbSize)
+                        .asBufferedImage());
     }
 
     @Benchmark
     public BufferedImage scalrTikaTransformer() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "scalrTikaTransformer");
+        OutputWriter myRun = outputWriter.next()
+                .setSourceFileAndLabel(filename, "scalrTikaTransformer");
         Image source = ImageIO.read(new File(inputDir + filename));
         BufferedImage output = new BufferedImage(source.getWidth(null),
                 source.getHeight(null),
@@ -140,6 +146,6 @@ public class ThumbnailBenchmark {
         Graphics2D graphics = output.createGraphics();
         graphics.drawImage(source, null, null);
         graphics.dispose();
-        return testRun.setThumbnailAndReturn(Scalr.resize(output, thumbSize));
+        return myRun.setThumbnailAndReturn(Scalr.resize(output, thumbSize));
     }
 }

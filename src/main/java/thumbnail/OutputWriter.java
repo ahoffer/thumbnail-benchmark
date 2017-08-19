@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-public class TestRun {
+public class OutputWriter {
 
     private String inputDir;
 
@@ -19,16 +19,21 @@ public class TestRun {
 
     private String sourceFilename;
 
-    public static TestRun from(String inputDirectory, String outputDirectory) {
-        TestRun object = new TestRun();
+    public static OutputWriter from(String inputDirectory, String outputDirectory) {
+        OutputWriter object = new OutputWriter();
         object.inputDir = inputDirectory;
         object.outputDir = outputDirectory;
         return object;
     }
 
-    public void setSourceFileAndLabel(String sourceFilename, String technique) {
+    public OutputWriter next() {
+        return OutputWriter.from(inputDir, outputDir);
+    }
+
+    public OutputWriter setSourceFileAndLabel(String sourceFilename, String technique) {
         this.sourceFilename = sourceFilename;
         this.technique = technique;
+        return this;
     }
 
     public void end() {

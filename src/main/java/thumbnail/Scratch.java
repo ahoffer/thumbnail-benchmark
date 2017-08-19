@@ -32,7 +32,7 @@ public class Scratch {
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
 
-    private TestRun testRun;
+    private OutputWriter outputWriter;
 
     public static void main(String[] args) throws RunnerException {
         String simpleName = Scratch.class.getSimpleName();
@@ -51,17 +51,17 @@ public class Scratch {
 
   /*  @Benchmark
     public BufferedImage jpeg2000() throws IOException {
-        testRun.setSourceFileAndLabel(filename, "jpeg2000");
-        BufferedImage output = Subnail.of(testRun.getSoureceFile())
+        outputWriter.setSourceFileAndLabel(filename, "jpeg2000");
+        BufferedImage output = Subnail.of(outputWriter.getSoureceFile())
                 .thumbSize(thumbSize)
                 .samplePeriod(16)
                 .create((sourceImage, thumbnailSize) -> Scalr.resize(sourceImage, thumbnailSize));
-        return testRun.setThumbnailAndReturn(output);
+        return outputWriter.setThumbnailAndReturn(output);
     }*/
 
     @Setup
     public void setup() throws FileNotFoundException {
-        testRun = TestRun.from(inputDir, inputDir + "output/");
+        outputWriter = OutputWriter.from(inputDir, inputDir + "output/");
 
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new J2KImageReaderSpi());
@@ -70,7 +70,7 @@ public class Scratch {
 
     @TearDown
     public void teardown() {
-        testRun.end();
+        outputWriter.end();
     }
 
 }
