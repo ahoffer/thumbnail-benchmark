@@ -99,35 +99,35 @@ public class ThumbnailBenchmark {
     @Benchmark
     public BufferedImage subsamplingAutoThumbnailator() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsamplingAUTOthumbnailator");
-        return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
-                .create((soureImage) -> Thumbnails.of(soureImage)
-                        .height(thumbSize)
-                        .asBufferedImage()));
+        return testRun.setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(testRun.getSoureceFile())
+                .read())
+                .height(thumbSize)
+                .asBufferedImage());
     }
 
     //    @Benchmark
     public BufferedImage subsamplingAutoScalr() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsamplingAUTOscalr");
-        return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
-                .create((soureImage) -> Scalr.resize(soureImage, thumbSize)));
+        return testRun.setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(testRun.getSoureceFile())
+                .read(), thumbSize));
     }
 
     //    @Benchmark
     public BufferedImage subsampling16Scalr() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsampling16Scalr");
-        return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
+        return testRun.setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(testRun.getSoureceFile())
                 .samplePeriod(16)
-                .create(((sourceImage) -> Scalr.resize(sourceImage, thumbSize))));
+                .read(), thumbSize));
     }
 
     @Benchmark
     public BufferedImage subsampling16Thumnbailator() throws IOException {
         testRun.setSourceFileAndLabel(filename, "subsampling16Thumbnailator");
-        return testRun.setThumbnailAndReturn(Subnail.of(testRun.getSoureceFile())
+        return testRun.setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(testRun.getSoureceFile())
                 .samplePeriod(16)
-                .create((sourceImage) -> Thumbnails.of(sourceImage)
-                        .height(thumbSize)
-                        .asBufferedImage()));
+                .read())
+                .height(thumbSize)
+                .asBufferedImage());
     }
 
     @Benchmark
