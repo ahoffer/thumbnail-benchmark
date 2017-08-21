@@ -14,11 +14,21 @@
             <name>Codice Repository</name>
             <url>https://artifacts.codice.org/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>ahoffer</id>
+            <name>github-ahoffer</name>
+            <url>https://github.com/ahoffer/ahoffer.github.io/tree/master/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
     </repositories>
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jmh.version>1.20-SNAPSHOT</jmh.version>
+        <jmh.version>1.21.0</jmh.version>
         <javac.target>1.8</javac.target>
         <uberjar.name>benchmarks</uberjar.name>
     </properties>
@@ -42,13 +52,7 @@
             <artifactId>thumbnailator</artifactId>
             <version>0.4.8</version>
         </dependency>
-
-        <!--<dependency>-->
-        <!--<groupId>org.openjdk.jmh</groupId>-->
-        <!--<artifactId>jmh-core</artifactId>-->
-        <!--<version>${jmh.version}</version>-->
-        <!--</dependency>-->
-
+        
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
