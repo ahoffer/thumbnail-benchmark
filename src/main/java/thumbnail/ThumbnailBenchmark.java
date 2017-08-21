@@ -51,9 +51,9 @@ public class ThumbnailBenchmark {
     public int thumbSize;
 
     // LARGE FILES ( > 1 MB)
-    @Param({"building-30mb.jpg", "land-8mb.jpg", "mountains-20mb.jpg", "baghdad-j2k-20mb.jp2",
+    @Param({"building-30mb.jpg", "land-8mb.jpg", "robot-pic.jpg", "mountains-20mb.jpg",
             "crowd-3mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
-        String filename;
+    String filename;
 
     // SMALL FILES ( < 1 MB)
     //    @Param({"unicorn-rainbow-57kb.gif", "land-100kb.jpg", "parliment-60kb.jpg", "city-300kb.jpg",
