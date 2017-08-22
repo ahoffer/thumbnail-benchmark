@@ -72,7 +72,7 @@
         <dependency>
             <groupId>com.github.jai-imageio</groupId>
             <artifactId>jai-imageio-jpeg2000</artifactId>
-            <version>1.3.1_CODICE_2</version>
+            <version>1.3.1_CODICE_3</version>
         </dependency>
     </dependencies>
     <build>

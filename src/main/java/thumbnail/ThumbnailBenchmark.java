@@ -3,10 +3,10 @@ package thumbnail;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
@@ -39,33 +39,39 @@ import net.coobird.thumbnailator.Thumbnails;
 @State(Scope.Benchmark)
 public class ThumbnailBenchmark {
 
-    @State(Scope.Thread)
-    public static class ThreadState {
-        volatile ImageOutputWriter imageWriter = ImageOutputWriter.from(
-                "/Users/aaronhoffer/Downloads/sample-images/",
-                "/Users/aaronhoffer/Downloads/sample-images/output")
-                .turnOffWriting();
-    }
+    String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
+
+    String outputDir = inputDir + "output_2017-08-21/";
+
+    BufferedImage lastThumbnail;
+
+    String lastDescription;
 
     @Param({"256"})
     public int thumbSize;
 
     // LARGE FILES ( > 1 MB)
-    @Param({"building-30mb.jpg", "land-8mb.jpg", "robot-pic.jpg", "mountains-20mb.jpg",
-            "crowd-3mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
-    String filename;
+    //    @Param({"robot-pic-700kb.jpg", "building-30mb.jpg", "land-8mb.jpg", "mountains-20mb.jpg",
+    //            "crowd-3mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg"})
+    //    String filename;
+
+    //    @Param({"baghdad-j2k-20mb.jp2"})
+    //    String filename;
 
     // SMALL FILES ( < 1 MB)
     //    @Param({"unicorn-rainbow-57kb.gif", "land-100kb.jpg", "parliment-60kb.jpg", "city-300kb.jpg",
     //            "UN-bus-attack.jpg", "militants.jpg"})
     //    String filename;
 
+    @Param({"unicorn-rainbow-57kb.gif", "land-8mb.jpg"})
+    String filename;
+
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
-                .forks(2)
+                .forks(0)
                 .warmupIterations(1)
-                .measurementIterations(4)
+                .measurementIterations(1)
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(NaiveHeapSizeProfiler.class)
                 .addProfiler(GCProfiler.class)
@@ -82,85 +88,53 @@ public class ThumbnailBenchmark {
     }
 
     @TearDown
-    public void teardown(ThreadState state) {
-        state.imageWriter.end();
+    public void teardown() throws IOException {
+        ImageIO.write(lastThumbnail, "png", new File(outputDir + lastDescription + "-" + filename));
+        lastDescription = null;
+        lastThumbnail = null;
     }
-
-    //    @Benchmark
-    public BufferedImage subsamplingAggressiveThumbnailator(ThreadState state) throws IOException {
-        Function<Integer, Integer> periodFunction = (dim) -> Math.toIntExact(Math.round(Math.ceil(
-                dim / Math.pow(2, 8))));
-        return state.imageWriter.setSourceFileAndLabel(filename, "subsamplingAGGRESSIVE")
-                .setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(state.imageWriter.getSoureceFile())
-                        .periodFromDimension(periodFunction)
-                        .read())
-                        .height(thumbSize)
-                        .asBufferedImage());
-    }
-
-    //    @Benchmark
-    //    public BufferedImage scalrSimple() throws IOException {
-    //        outputWriter.setSourceFileAndLabel(filename, "scalr");
-    //        return outputWriter.setThumbnailAndReturn(Scalr.resize(ImageIO.read(outputWriter.getSoureceFile()),
-    //                thumbSize));
-    //    }
-
-    //    @Benchmark
-    //    public BufferedImage thumbnailatorSimple() throws IOException {
-    //        return outputWriter.next()
-    //                .setSourceFileAndLabel(filename, "thumbnailator")
-    //                .setThumbnailAndReturn(Thumbnails.of(inputDir + filename)
-    //                        .height(thumbSize)
-    //                        .asBufferedImage());
-    //    }
-
-    //    @Benchmark
-    public BufferedImage subsamplingAutoThumbnailator(ThreadState state) throws IOException {
-        return state.imageWriter.setSourceFileAndLabel(filename, "subsamplingAUTO")
-                .setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(state.imageWriter.getSoureceFile())
-                        .read())
-                        .height(thumbSize)
-                        .asBufferedImage());
-    }
-
-    //    @Benchmark
-    //    public BufferedImage subsamplingAutoScalr() throws IOException {
-    //        return outputWriter.next()
-    //                .setSourceFileAndLabel(filename, "subsamplingAUTOscalr")
-    //                .setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(outputWriter.getSoureceFile())
-    //                        .read(), thumbSize));
-    //    }
-
-    //    @Benchmark
-    //    public BufferedImage subsampling16Scalr() throws IOException {
-    //        return outputWriter.next()
-    //                .setSourceFileAndLabel(filename, "subsampling16Scalr")
-    //                .setThumbnailAndReturn(Scalr.resize(SampledImageReader.of(outputWriter.getSoureceFile())
-    //                        .samplePeriod(16)
-    //                        .read(), thumbSize));
-    //    }
 
     @Benchmark
-    public BufferedImage subsampling16Thumnbailator(ThreadState state) throws IOException {
-        return state.imageWriter.setSourceFileAndLabel(filename, "subsampling16Thumbnailator")
-                .setThumbnailAndReturn(Thumbnails.of(SampledImageReader.of(state.imageWriter.getSoureceFile())
-                        .samplePeriod(16)
-                        .read())
-                        .height(thumbSize)
-                        .asBufferedImage());
+    public BufferedImage scalrSimple() throws IOException {
+        lastDescription = "scalr";
+        lastThumbnail = Scalr.resize(ImageIO.read(getSoureceFile()), thumbSize);
+        return lastThumbnail;
     }
 
-    //    @Benchmark
-    public BufferedImage scalrTikaTransformer(ThreadState state) throws IOException {
-        state.imageWriter.setSourceFileAndLabel(filename, "scalrTikaTransformer");
-        Image source = ImageIO.read(state.imageWriter.getSoureceFile());
+    @Benchmark
+    public BufferedImage thumbnailatorSimple() throws IOException {
+        lastDescription = "thumbnailator";
+        lastThumbnail = Thumbnails.of(getSoureceFile())
+                .height(thumbSize)
+                .asBufferedImage();
+        return lastThumbnail;
+    }
+
+    @Benchmark
+    public BufferedImage subsamplingAutoThumbnailator() throws IOException {
+        lastThumbnail = Thumbnails.of(SampledImageReader.of(getSoureceFile())
+                .read())
+                .height(thumbSize)
+                .asBufferedImage();
+        lastDescription = "subsamplingAUTO";
+        return lastThumbnail;
+    }
+
+    @Benchmark
+    public BufferedImage scalrTikaTransformer() throws IOException {
+        lastDescription = "scalrTikaTransformer";
+        Image source = ImageIO.read(getSoureceFile());
         BufferedImage output = new BufferedImage(source.getWidth(null),
                 source.getHeight(null),
                 BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = output.createGraphics();
         graphics.drawImage(source, null, null);
         graphics.dispose();
-        return state.imageWriter.setThumbnailAndReturn(Scalr.resize(output, thumbSize));
+        lastThumbnail = Scalr.resize(output, thumbSize);
+        return lastThumbnail;
     }
 
+    public File getSoureceFile() {
+        return new File(inputDir + filename);
+    }
 }

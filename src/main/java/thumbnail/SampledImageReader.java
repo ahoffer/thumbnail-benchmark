@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -16,6 +15,10 @@ import javax.imageio.stream.ImageInputStream;
 public class SampledImageReader {
 
     public static final double SUBSAMPLING_HINT = Math.pow(2, 10);
+
+    private static long fileSizeBytes;
+
+    protected int samplePeriod;
 
     @FunctionalInterface
     public interface DimSupplier {
@@ -27,20 +30,7 @@ public class SampledImageReader {
         BufferedImage apply(BufferedImage sourceImage) throws IOException;
     }
 
-    Function<Integer, Integer> periodFromDimension =
-            dimension -> Math.toIntExact(Math.round(Math.ceil(dimension / SUBSAMPLING_HINT)));
-
-    Function<Long, Integer> periodFromFileSize =
-            (fileSize) -> periodFromDimension.apply((int) Math.sqrt(fileSize));
-
-    long fileSizeHint;
-
     int imageIndex;
-
-    //TODO: Convert sample period to Optional<Integer>
-    int columnsSamplingPeriod = 0;
-
-    int rowSamplingPeriod = 0;
 
     ImageReader reader;
 
@@ -55,8 +45,8 @@ public class SampledImageReader {
     static public SampledImageReader of(File sourceFile) throws IOException {
         SampledImageReader object = new SampledImageReader();
         object.source = new FileInputStream(sourceFile);
-        return object.fileSizeHint(sourceFile.length())
-                .init();
+        fileSizeBytes = sourceFile.length();
+        return object.init();
     }
 
     protected SampledImageReader init() throws IOException {
@@ -67,87 +57,43 @@ public class SampledImageReader {
         return this;
     }
 
-    public SampledImageReader fileSizeHint(long fileSize) {
-        this.fileSizeHint = fileSize;
-        return this;
-    }
-
-    public SampledImageReader periodFromDimension(Function<Integer, Integer> function) {
-        periodFromDimension = function;
-        return this;
-    }
-
-    public SampledImageReader periodFromFileSize(Function<Long, Integer> function) {
-        periodFromFileSize = function;
-        return this;
-    }
-
     public SampledImageReader imageIndex(int index) {
         imageIndex = index;
         return this;
     }
 
-    //    public SampledImageReader autosetSamplePeriod() {
-    //        rowSamplingPeriod = 0;
-    //        columnsSamplingPeriod = 0;
-    //        return this;
-    //    }
-
     public SampledImageReader samplePeriod(int period) {
-        return rowSamplingPeriod(period).colulmnSamplePeriod(period);
-    }
-
-    private SampledImageReader colulmnSamplePeriod(int period) {
-        //TODO: validate > 0
-        columnsSamplingPeriod = period;
+        samplePeriod = period;
         return this;
     }
 
-    public SampledImageReader rowSamplingPeriod(int period) {
-        //TODO: validate > 0
-        rowSamplingPeriod = period;
-        return this;
-    }
+    public int computeSamplingPeriod() {
+        if (samplePeriod == 0) {
+            try {
+                // S
+                int longestDimensionSize = Math.max(reader.getWidth(imageIndex),
+                        reader.getHeight(imageIndex));
+                return Math.toIntExact(Math.round(Math.ceil(
+                        longestDimensionSize / SUBSAMPLING_HINT)));
 
-    public int getRowSamplePeriod() {
-        if (rowSamplingPeriod == 0) {
-            rowSamplingPeriod = computeSubsamplingPeriod(() -> reader.getHeight(imageIndex));
-        }
-        return rowSamplingPeriod;
-    }
-
-    public int getColumnSamplePeriod() {
-        if (columnsSamplingPeriod == 0) {
-            columnsSamplingPeriod = computeSubsamplingPeriod(() -> reader.getWidth(imageIndex));
-        }
-        return columnsSamplingPeriod;
-    }
-
-    protected int computeSubsamplingPeriod(DimSupplier getDimension) {
-        //TODO: validate input > 0
-        // 2047/2048 = 0.9995 -> 1
-        // 2048/2048 = 1 -> 1
-        // 2049/2048 = 1.00049 -> 2
-        int samplePeriod = 1;
-        int dimension;
-        try {
-            dimension = getDimension.get();
-        } catch (IOException e) {
-            if (fileSizeHint > 0) {
-                return periodFromFileSize.apply(fileSizeHint);
-            } else {
-                return samplePeriod;
+            } catch (IOException e) {
+                // Heuristic. Set sampling rate based on file size.
+                return (int) Math.round(Math.sqrt(fileSizeBytes));
             }
         }
-        return periodFromDimension.apply(dimension);
+        return samplePeriod;
     }
 
     public BufferedImage read() throws IOException {
         int columnOffset = 0;
         int rowOffset = 0;
+        // Use the same sampling period for both rows and columns to preserve images's
+        // aspect ratio.
+        int columnSamplingPeriod = computeSamplingPeriod();
+        int rowSamplingPeriod = computeSamplingPeriod();
         ImageReadParam imageParam = reader.getDefaultReadParam();
-        imageParam.setSourceSubsampling(getColumnSamplePeriod(),
-                getRowSamplePeriod(),
+        imageParam.setSourceSubsampling(columnSamplingPeriod,
+                rowSamplingPeriod,
                 columnOffset,
                 rowOffset);
         return reader.read(imageIndex, imageParam);
