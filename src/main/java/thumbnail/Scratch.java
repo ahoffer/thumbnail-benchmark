@@ -42,22 +42,11 @@ public class Scratch {
                 .measurementIterations(1)
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(GCProfiler.class)
-                .output("scratch.csv")
                 .addProfiler(HotspotMemoryProfiler.class)
                 .addProfiler(NaiveHeapSizeProfiler.class)
                 .build();
         new Runner(opt).run();
     }
-
-  /*  @Benchmark
-    public BufferedImage jpeg2000() throws IOException {
-        imageOutputWriter.setSourceFileAndLabel(filename, "jpeg2000");
-        BufferedImage output = Subnail.of(imageOutputWriter.getSoureceFile())
-                .thumbSize(thumbSize)
-                .samplePeriod(16)
-                .create((sourceImage, thumbnailSize) -> Scalr.resize(sourceImage, thumbnailSize));
-        return imageOutputWriter.setThumbnailAndReturn(output);
-    }*/
 
     @Setup
     public void setup() throws FileNotFoundException {

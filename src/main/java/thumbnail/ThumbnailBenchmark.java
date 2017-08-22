@@ -81,7 +81,7 @@ public class ThumbnailBenchmark {
 
     @Setup
     public void setup() throws FileNotFoundException {
-        //         Add a JPEG 2000 reader
+        // Add a JPEG 2000 reader
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new J2KImageReaderSpi());
 
@@ -89,6 +89,7 @@ public class ThumbnailBenchmark {
 
     @TearDown
     public void teardown() throws IOException {
+        //Save thumbnail as a PNG in the output directory
         ImageIO.write(lastThumbnail, "png", new File(outputDir + lastDescription + "-" + filename));
         lastDescription = null;
         lastThumbnail = null;

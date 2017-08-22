@@ -14,10 +14,12 @@ import javax.imageio.stream.ImageInputStream;
 
 public class SampledImageReader {
 
-    public static final double SUBSAMPLING_HINT = Math.pow(2, 10);
+    public static final double SUBSAMPLING_HINT = 512;
 
+    //TODO: Maybe change some of these fields to Optional value holders.
     private static long fileSizeBytes;
 
+    //TODO: Maybe change some of these fields to Optional value holders.
     protected int samplePeriod;
 
     @FunctionalInterface
@@ -70,15 +72,14 @@ public class SampledImageReader {
     public int computeSamplingPeriod() {
         if (samplePeriod == 0) {
             try {
-                // S
                 int longestDimensionSize = Math.max(reader.getWidth(imageIndex),
                         reader.getHeight(imageIndex));
-                return Math.toIntExact(Math.round(Math.ceil(
+                samplePeriod = Math.toIntExact(Math.round(Math.ceil(
                         longestDimensionSize / SUBSAMPLING_HINT)));
 
             } catch (IOException e) {
-                // Heuristic. Set sampling rate based on file size.
-                return (int) Math.round(Math.sqrt(fileSizeBytes));
+                //Give up. Do not subsample the image.
+                samplePeriod = 1;
             }
         }
         return samplePeriod;
