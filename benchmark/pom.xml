@@ -5,7 +5,7 @@
 
     <parent>
         <groupId>com.github.ahoffer</groupId>
-        <artifactId>thumbnail</artifactId>
+        <artifactId>thumbnail-benchmark</artifactId>
         <version>1.0.0</version>
     </parent>
 
