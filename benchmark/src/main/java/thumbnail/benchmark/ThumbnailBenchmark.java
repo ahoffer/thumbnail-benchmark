@@ -47,6 +47,9 @@ import net.coobird.thumbnailator.Thumbnails;
 @State(Scope.Benchmark)
 public class ThumbnailBenchmark {
 
+    public static final String ABSOLUTE_PATH_TO_IMAGEMAGICK_CONVERT_EXECUTABLE =
+            "/opt/local/bin/convert";
+
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
 
     String outputDir = inputDir + "output/";
@@ -85,12 +88,13 @@ public class ThumbnailBenchmark {
     public static void main(String[] args) throws RunnerException {
         String simpleName = ThumbnailBenchmark.class.getSimpleName();
         Options opt = new OptionsBuilder().include(simpleName)
-                .forks(1)
+                .forks(2)
                 .warmupIterations(0)
                 .measurementIterations(4)
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(NaiveHeapSizeProfiler.class)
                 .addProfiler(GCProfiler.class)
+                .result("results.csv")
                 .build();
         new Runner(opt).run();
     }
@@ -176,7 +180,7 @@ public class ThumbnailBenchmark {
         Process proc;
         try {
             tempOutput = File.createTempFile("output", "");
-            proc = new ProcessBuilder("/opt/local/bin/convert",
+            proc = new ProcessBuilder(ABSOLUTE_PATH_TO_IMAGEMAGICK_CONVERT_EXECUTABLE,
                     "-sample",
                     "1024x1024",
                     "-thumbnail",
