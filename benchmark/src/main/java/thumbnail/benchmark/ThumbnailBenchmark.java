@@ -8,8 +8,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -51,19 +49,17 @@ public class ThumbnailBenchmark {
 
     String inputDir = "/Users/aaronhoffer/Downloads/sample-images/";
 
-    String outputDir = inputDir + "output_2017-08-21/";
+    String outputDir = inputDir + "output/";
 
     BufferedImage lastThumbnail;
 
     String lastDescription;
 
-    Path tmpDir;
-
     @Param({"256"})
     public int thumbSize;
 
     // ALL FILES
-    @Param({"unicorn-rainbow-57kb.gif", "land-100kb.jpg", "parliment-60kb.jpg", "city-300kb.jpg",
+    @Param({"unicorn-rainbow-57kb.gif", "land-100kb.jpg", "parliament-60kb.jpg", "city-300kb.jpg",
             "UN-bus-attack.jpg", "militants.jpg", "building-30mb.jpg", "land-8mb.jpg",
             "mountains-20mb.jpg", "crowd-3mb.jpg", "australia-250mb.png", "salt-lake-340mb.jpg",
             "baghdad-j2k-20mb.jp2", "carrots-j2k-8mb.j2k", "olso-j2k-19mb.jp2"})
@@ -95,7 +91,6 @@ public class ThumbnailBenchmark {
                 .resultFormat(ResultFormatType.NORMALIZED_CSV)
                 .addProfiler(NaiveHeapSizeProfiler.class)
                 .addProfiler(GCProfiler.class)
-                .include("imageMagick.*")
                 .build();
         new Runner(opt).run();
     }
@@ -105,7 +100,6 @@ public class ThumbnailBenchmark {
         // Add a JPEG 2000 reader
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new J2KImageReaderSpi());
-        tmpDir = Files.createTempDirectory("image");
     }
 
     @TearDown
@@ -176,13 +170,11 @@ public class ThumbnailBenchmark {
 
     @Benchmark
     public BufferedImage imageMagick() throws IOException, IM4JavaException, InterruptedException {
-        //TODO: use stdin and stdout for IPC?
-        lastDescription = "imageMagick";
 
+        lastDescription = "imageMagick";
         File tempOutput = null;
         Process proc;
         try {
-
             tempOutput = File.createTempFile("output", "");
             proc = new ProcessBuilder("/opt/local/bin/convert",
                     "-sample",
@@ -193,9 +185,7 @@ public class ThumbnailBenchmark {
                     tempOutput.getCanonicalPath()).start();
             proc.waitFor();
             lastThumbnail = ImageIO.read(tempOutput);
-
         } finally {
-
             if (Objects.nonNull(tempOutput)) {
                 tempOutput.delete();
             }
