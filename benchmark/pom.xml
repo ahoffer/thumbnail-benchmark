@@ -69,13 +69,11 @@
             <artifactId>imgscalr-lib</artifactId>
             <version>4.2</version>
         </dependency>
-
         <dependency>
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>0.4.8</version>
         </dependency>
-
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
